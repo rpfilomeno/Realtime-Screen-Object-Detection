@@ -20,16 +20,16 @@ import numpy as np
 from pyfiglet import Figlet
 
 # Change these variables if you want!
-MAX_BOX_AREA = 100000000 # pixels^2
-PRECISION = 0.7 # 60 % detection treshhold
+MAX_BOX_AREA = 640000#100000000 # pixels^2
+PRECISION = 0.3 # 60 % detection treshhold
 MAX_DETECTION = 5
-MAX_TRACKING_MISSES = 30
-WIDTH = 1920
+MAX_TRACKING_MISSES = 5
+WIDTH = 1820
 HEIGHT = 1080
-SHOW_ONLY = ["person"] # Start Empty, receive items to show
+SHOW_ONLY = ["person","dog","cat","car","bus","bicycle","motorcycle","truck","gun","axe","table","chair","door","stair","monitor"] # Start Empty, receive items to show
 OFFSET = (0,0)
 DETECTION_SIZE = 480
-DETECTION_DURATION = 2
+DETECTION_DURATION = 1
 RESET_SHOW_ONLY_ON_START=False
 HTTP_SERVER = False
 
@@ -70,12 +70,12 @@ class MainGUI(QMainWindow):
 
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        """
+        
         self.timer = QTimer()
         self.timer.setInterval(10)
         self.timer.timeout.connect(self.print_output)
         self.timer.start()
-        """
+        
 
         # Start Detection thread
         self.start_worker()
@@ -100,7 +100,7 @@ class MainGUI(QMainWindow):
                 self.shared_variables.list.append(screen_overlay_handler.TrackingBox(len(self.shared_variables.list), self.shared_variables, box[0],box[1],box[2]))
 
     def print_output(self):
-        """
+        
         remove = []
         index = 0
         for box in self.shared_variables.list:
@@ -112,8 +112,8 @@ class MainGUI(QMainWindow):
         for i in remove:
             del self.shared_variables.list[i]
             print(self.shared_variables.list)
-        """
-        pass
+        
+        #pass
 
     def thread_complete(self):
         #print("sss")
@@ -158,11 +158,14 @@ if __name__ == "__main__":
     print("Exit by typeing : 'ctrl+c'")
     print()
 
+    """
     print("")
     print("Realtime-Screen-stream-with-Ai-detetion-Overlay Copyright (C) 2019  Daniel Westberg")
     print("This program comes with ABSOLUTELY NO WARRANTY;")
     print("This is free software, and you are welcome to redistribute it under certain conditions;")
     print("")
+
+	"""
 
     app = QApplication([])
 

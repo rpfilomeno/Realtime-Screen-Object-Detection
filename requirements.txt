@@ -4,5 +4,6 @@ numpy>==1.16.2
 mss>==4.0.3
 Image>==1.5.27
 opencv-python>==3.4.1.15
+opencv-contrib-python
 pyfiglet>==0.7.6
-functools>==0.5
+protobuf<=3.20

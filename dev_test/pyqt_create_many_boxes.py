@@ -9,43 +9,44 @@ import time
 
 
 def create(score, classification, x,y,width,height):
-    print("create")
-    splash_pix = QPixmap('../images/box2.png')
-    splash_pix = splash_pix.scaled(width,height);
+	print("create")
+	splash_pix = QPixmap('../images/box2.png')
+	splash_pix = splash_pix.scaled(width,height);
 
-    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    #splash.setWindowOpacity(0.2)
-    splash.setWindowFlag(Qt.WindowStaysOnTopHint)
-    splash.setAttribute(Qt.WA_NoSystemBackground)
-    splash.setAttribute(Qt.WA_TranslucentBackground)
+	splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+	#splash.setWindowOpacity(0.2)
+	splash.setWindowFlag(Qt.WindowStaysOnTopHint)
+	splash.setAttribute(Qt.WA_NoSystemBackground)
+	splash.setAttribute(Qt.WA_TranslucentBackground)
 
-    label = QLabel( splash );
-    label.setWordWrap( True );
-    label.setText( score + " " + classification );
+	label = QLabel( splash );
+	label.setWordWrap( True );
+	
+	label.setText( score + " " + classification );
 
 
-    splash.setAttribute(Qt.WA_NoSystemBackground)
-    splash.move(x,y)
+	splash.setAttribute(Qt.WA_NoSystemBackground)
+	splash.move(x,y)
 
-    splash.show()
-    return splash
+	splash.show()
+	return splash
 
-    print("done")
+	print("done")
 
 if __name__ == '__main__':
 
-    app = QApplication(sys.argv)
-    x = 10
-    y = 10
-    width = 100
-    height = 100
+	app = QApplication(sys.argv)
+	x = 10
+	y = 10
+	width = 100
+	height = 100
 
-    i = 0
-    list = []
-    while(1):
-        list.append( create("10%", "person", 10+i,10+i,100,100))
-        i = i+1
-        time.sleep(0.1)
-    time.sleep(2)
+	i = 0
+	list = []
+	while(1):
+		list.append( create("10%", "person", 10+i,10+i,100,100))
+		i = i+1
+		time.sleep(0.1)
+	time.sleep(2)
 
-    sys.exit(app.exec_())
+	sys.exit(app.exec_())

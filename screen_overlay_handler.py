@@ -9,6 +9,8 @@ import threading
 import sys
 import time
 
+
+
 '''
 COPYRIGHT @ Grebtsew 2019
 
@@ -17,204 +19,216 @@ This file contains functions for showing overlay detections
 
 
 class TrackingBox(QSplashScreen):
-    splash_pix = None
-    done = False
+	splash_pix = None
+	done = False
 
-    def __init__(self, id, shared_variables, score, classification, box, *args, **kwargs):
-        super(TrackingBox, self).__init__(*args, **kwargs)
-        self.classification = classification
-        self.shared_variables = shared_variables
-        self.counter = 0
-        self.x = box[0]
-        self.y = box[1]
-        self.width = box[2]
-        self.height = box[3]
-        self.id = id
-        self.splash_pix = QPixmap('./images/box2.png')
-        self.splash_pix = self.splash_pix.scaled(round(self.width*self.shared_variables.DETECTION_SCALE),round(self.height*self.shared_variables.DETECTION_SCALE));
-        self.setPixmap(self.splash_pix)
+	def __init__(self, id, shared_variables, score, classification, box, *args, **kwargs):
+		super(TrackingBox, self).__init__(*args, **kwargs)
+		self.classification = classification
+		self.shared_variables = shared_variables
+		self.counter = 0
+		self.x = box[0]
+		self.y = box[1]
+		self.width = box[2]
+		self.height = box[3]
+		self.id = id
+		self.splash_pix = QPixmap('./images/box4.png')
+		self.splash_pix = self.splash_pix.scaled(round(self.width*self.shared_variables.DETECTION_SCALE),round(self.height*self.shared_variables.DETECTION_SCALE));
+		self.setPixmap(self.splash_pix)
 
-        self.setWindowFlag(Qt.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setAttribute(Qt.WA_NoSystemBackground)
+		self.starttime = time.time()
 
-        label = QLabel( self )
-        label.setWordWrap( True )
-        label.move(30,30)
-        label.setStyleSheet(" color: rgb(0, 100, 200); font-size: 15pt; ")
+		self.setWindowFlag(Qt.WindowStaysOnTopHint)
+		self.setAttribute(Qt.WA_TranslucentBackground)
+		self.setAttribute(Qt.WA_NoSystemBackground)
 
-        label.setText( str(int(100*score))+"%" + " " + classification );
-        self.move(self.x,self.y)
-        self.show()
+		label = QLabel( self )
+		label.setWordWrap( True )
+		label.move(30,30)
+		label.setStyleSheet(" color: rgb(12, 255, 200); font-size: 15pt; ")
 
-        self.tracking = Tracking( (self.x,self.y,self.width,self.height),self.shared_variables)
+		label.setText( str(int(100*score))+"%" + " " + classification );
+		self.move(self.x,self.y)
+		self.show()
 
-        self.threadpool = QThreadPool()
+		self.tracking = Tracking( (self.x,self.y,self.width,self.height),self.shared_variables)
 
-        #print("New Box Created at ",self.x,self.y, " Size ", self.width, self.height)
+		self.threadpool = QThreadPool()
 
-        self.start_worker()
+		#print("New Box Created at ",self.x,self.y, " Size ", self.width, self.height)
 
-    def progress_fn(self, n):
-        #print("%d%% done" % n)
-        pass
-    
-    def remove(self):
-        self.shared_variables.list.remove(self)
-        self.done = True
-        self.threadpool.cancel
+		self.start_worker()
 
-    def execute_this_fn(self, progress_callback):
+	def progress_fn(self, n):
+		#print("%d%% done" % n)
+		pass
+	
+	def remove(self):
+		now = time.time()
+		diff = now - self.starttime
+		print("box{}: {}s,".format(str(self.id), diff))
+		self.shared_variables.list.remove(self)
+		self.done = True
+		self.threadpool.cancel
 
-        if(not self.tracking.running):
-            if not self.done: # Remove ourself from gui list
-                self.shared_variables.list.remove(self)
-                self.done = True
-                self.threadpool.cancel
-        else:
-            self.tracking.run()
+	def execute_this_fn(self, progress_callback):
 
-        return "Done."
+		if(not self.tracking.running):
+			if not self.done: # Remove ourself from gui list
+				self.shared_variables.list.remove(self)
+				self.done = True
+				self.threadpool.cancel
+		else:
+			self.tracking.run()
 
-
-    def print_output(self, s):
-        #print(str(self.id))
-        self.hide()
-        self.repaint_size(round(self.tracking.box[2]*self.shared_variables.DETECTION_SCALE), round(self.tracking.box[3]*self.shared_variables.DETECTION_SCALE))
-        self.move(round(self.tracking.box[0]*self.shared_variables.DETECTION_SCALE), round(self.tracking.box[1]*self.shared_variables.DETECTION_SCALE))
-        self.show()
-
-    def thread_complete(self):
-        #print("THREAD COMPLETE!")
-        self.start_worker()
-
-    def start_worker(self):
-        # Pass the function to execute
-        worker = Worker(self.execute_this_fn) # Any other args, kwargs are passed to the run function
-        worker.signals.result.connect(self.print_output)
-        worker.signals.finished.connect(self.thread_complete)
-        worker.signals.progress.connect(self.progress_fn)
-
-        # Execute
-        self.threadpool.start(worker)
-
-    def repaint_size(self, width, height):
-        #splash_pix = QPixmap('../images/box2.png')
-        self.splash_pix = self.splash_pix.scaled(width,height);
-        self.setPixmap(self.splash_pix)
+		return "Done."
 
 
-    def get_box(self):
-        return self.tracking.box
+	def print_output(self, s):
+		now = time.time()
+		diff = now - self.starttime
+		if diff > 10:
+			print("TERMINATED!!!")
+			self.remove()
+			return
+		self.hide()
+		self.repaint_size(round(self.tracking.box[2]*self.shared_variables.DETECTION_SCALE), round(self.tracking.box[3]*self.shared_variables.DETECTION_SCALE))
+		self.move(round(self.tracking.box[0]*self.shared_variables.DETECTION_SCALE), round(self.tracking.box[1]*self.shared_variables.DETECTION_SCALE))
+		self.show()
+
+		
+
+	def thread_complete(self):
+		#print("THREAD COMPLETE!")
+		self.start_worker()
+
+	def start_worker(self):
+		# Pass the function to execute
+		worker = Worker(self.execute_this_fn) # Any other args, kwargs are passed to the run function
+		worker.signals.result.connect(self.print_output)
+		worker.signals.finished.connect(self.thread_complete)
+		worker.signals.progress.connect(self.progress_fn)
+
+		# Execute
+		self.threadpool.start(worker)
+
+	def repaint_size(self, width, height):
+		#splash_pix = QPixmap('../images/box2.png')
+		self.splash_pix = self.splash_pix.scaled(width,height);
+		self.setPixmap(self.splash_pix)
+
+
+	def get_box(self):
+		return self.tracking.box
 
 
 def create_box(x,y,width,height):
-    '''
-    Show an overlaybox without label
-    @Param x box left
-    @Param y box up
-    @Param width box width
-    @Param height box height
-    @Return overlay instance
-    '''
+	'''
+	Show an overlaybox without label
+	@Param x box left
+	@Param y box up
+	@Param width box width
+	@Param height box height
+	@Return overlay instance
+	'''
 
-    splash_pix = QPixmap('images/square2.png')
-    splash_pix = splash_pix.scaled(width,height);
+	splash_pix = QPixmap('images/square2.png')
+	splash_pix = splash_pix.scaled(width,height);
 
-    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    splash.setWindowOpacity(0.2)
+	splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+	splash.setWindowOpacity(0.2)
 
-    splash.setAttribute(Qt.WA_NoSystemBackground)
-    splash.move(x,y)
+	splash.setAttribute(Qt.WA_NoSystemBackground)
+	splash.move(x,y)
 
-    splash.show()
-    return splash
+	splash.show()
+	return splash
 
 
 def create_box_with_score_classification(score, classification, x,y,width,height):
-    '''
-    Show an overlaybox with label
-    @Param score float
-    @Param classification string
-    @Param x box left
-    @Param y box up
-    @Param width box width
-    @Param height box height
-    @Return overlay instance
-    '''
-    splash_pix = QPixmap('images/square2.png')
-    splash_pix = splash_pix.scaled(width,height);
+	'''
+	Show an overlaybox with label
+	@Param score float
+	@Param classification string
+	@Param x box left
+	@Param y box up
+	@Param width box width
+	@Param height box height
+	@Return overlay instance
+	'''
+	splash_pix = QPixmap('images/square2.png')
+	splash_pix = splash_pix.scaled(width,height);
 
-    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    splash.setWindowOpacity(0.2)
+	splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+	splash.setWindowOpacity(0.2)
 
-    label = QLabel( splash );
-    label.setWordWrap( True );
-    label.setText( str(int(100*score))+"%" + " " + classification );
+	label = QLabel( splash );
+	label.setWordWrap( True );
+	label.setText( str(int(100*score))+"%" + " " + classification );
 
-    splash.setAttribute(Qt.WA_NoSystemBackground)
-    splash.move(x,y)
+	splash.setAttribute(Qt.WA_NoSystemBackground)
+	splash.move(x,y)
 
-    splash.show()
-    return splash
+	splash.show()
+	return splash
 
 def create_box_with_image_score_classification(image_path, score, classification, x,y,width,height):
-    '''
-    Show an overlaybox with label
-    @Param score float
-    @Param classification string
-    @Param x box left
-    @Param y box up
-    @Param width box width
-    @Param height box height
-    @Return overlay instance
-    '''
-    splash_pix = QPixmap(image_path)
-    splash_pix = splash_pix.scaled(width,height);
+	'''
+	Show an overlaybox with label
+	@Param score float
+	@Param classification string
+	@Param x box left
+	@Param y box up
+	@Param width box width
+	@Param height box height
+	@Return overlay instance
+	'''
+	splash_pix = QPixmap(image_path)
+	splash_pix = splash_pix.scaled(width,height);
 
-    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    splash.setWindowOpacity(0.2)
+	splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+	splash.setWindowOpacity(0.2)
 
-    label = QLabel( splash );
-    label.setWordWrap( True );
-    label.setText( str(int(100*score))+"%" + " " + classification );
+	label = QLabel( splash );
+	label.setWordWrap( True );
+	label.setText( str(int(100*score))+"%" + " " + classification );
 
-    splash.setAttribute(Qt.WA_NoSystemBackground)
-    splash.move(x,y)
-    splash.show()
-    return splash
+	splash.setAttribute(Qt.WA_NoSystemBackground)
+	splash.move(x,y)
+	splash.show()
+	return splash
 
 #TODO
 def create_fancy_box(score, classification,  x,y,width,height):
-    # Create fancier box without image
-    splash_pix = QPixmap(width, height)
+	# Create fancier box without image
+	splash_pix = QPixmap(width, height)
 
 
-    painter = QPainter(splash_pix)
-    painter.setPen(QPen(Qt.blue,  10, Qt.SolidLine))
-    path = QPainterPath()
+	painter = QPainter(splash_pix)
+	painter.setPen(QPen(Qt.blue,  10, Qt.SolidLine))
+	path = QPainterPath()
 
-    path.addRoundedRect(QRectF(0+10,0+10,width-20,height-20), 30, 30);
-    painter.drawPath(path);
-    painter.end()
-
-
-    splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-    splash.setWindowOpacity(1)
-    splash.setAttribute(Qt.WA_TranslucentBackground)
+	path.addRoundedRect(QRectF(0+10,0+10,width-20,height-20), 30, 30);
+	painter.drawPath(path);
+	painter.end()
 
 
-    label = QLabel( splash );
-    label.setWordWrap( True );
-    label.move(30,30)
-    label.setStyleSheet(" color: rgb(0, 100, 200); font-size: 30pt; ")
-    label.setText( str(int(100*score))+"%" + " " + classification );
+	splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+	splash.setWindowOpacity(1)
+	splash.setAttribute(Qt.WA_TranslucentBackground)
 
 
-    splash.setAttribute(Qt.WA_NoSystemBackground)
-    splash.move(x,y)
-    splash.show()
-    return splash
+	label = QLabel( splash );
+	label.setWordWrap( True );
+	label.move(30,30)
+	label.setStyleSheet(" color: rgb(0, 100, 200); font-size: 30pt; ")
+	label.setText( str(int(100*score))+"%" + " " + classification );
+
+
+	splash.setAttribute(Qt.WA_NoSystemBackground)
+	splash.move(x,y)
+	splash.show()
+	return splash
 
 
 
